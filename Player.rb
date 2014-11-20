@@ -27,7 +27,10 @@ class Player
         splitBet
         @split = true
         @splitHandList.push(@player_hand.pop)
-        @player_handVal /= 2
+        @player_handVal = 0 #Will reset value in case of Ace
+        @player_handVal = cardValue(@splitHandList[0])
+        # puts "#{@player_handVal} and #{@splitHandList} and @player"
+        @splitHasAce = @hasAce
         @splitHandValue = @player_handVal
     end
 
