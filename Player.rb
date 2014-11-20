@@ -23,14 +23,12 @@ class Player
     ################ METHODS FOR GAME PLAY ##########################
 
     #Method to begin split when there are duplicates in value
-    #TODO: CHECK IF THIS WORKS EVEN WHEN NOT ENOUGH MONEY
     def splitHand
-        if splitBet
-            @split = true
-            @splitHandList.push(@player_hand.pop)
-            @player_handVal /= 2
-            @splitHandValue = @player_handVal
-        end
+        splitBet
+        @split = true
+        @splitHandList.push(@player_hand.pop)
+        @player_handVal /= 2
+        @splitHandValue = @player_handVal
     end
 
 
@@ -58,53 +56,6 @@ class Player
             puts "#{name}, your current bet is #{player_bet}"
         end
         puts "#{name}, you have #{money} left as of this turn!"
-    end
-
-    #Helper method - returns value of hand or split hand
-    def handValue(split=false)
-        if split 
-            return @splitHandValue
-        else
-            return @player_handVal
-        end
-    end
-
-    #Helper method to clear variables for player
-    def clearHand
-        #Clears regular variables
-        @player_hand = []
-        @player_handVal = 0
-        @hasAce = false
-        @player_bet = 0
-
-        ##Clears split variables
-        @split = false
-        @splitHandList = []
-        @splitHandValue = 0
-        @splitHasAce = false
-        @split_bet = 0
-    end
-
-    #Checks the value of the card in hand - deals with the Ace and the 11/1 switching
-    def cardValue(card, split=false)
-        handVal = handValue(split)
-        royals = ['J', 'Q', 'K']
-        val = card[1]
-        if val == 'A'
-            if (handVal > 10)
-                return 1
-            else
-                if split 
-                    @splitHasAce = true
-                else
-                    @hasAce = true
-                end
-                return 11
-            end
-        elsif (royals.include? val)
-            val = 10
-        end
-        return val
     end
 
     #Method for Split hand receiving cards
@@ -172,11 +123,6 @@ class Player
     #Method to create a betting pool for the split hand
     #Returns false if not enough money to split hand
     def splitBet
-        #Check whether there is enough money to make another pool
-        if @money < @player_bet
-            puts "Sorry, you don't have money for this bet!"
-            return false
-        end
         @money -= @player_bet
         @split_bet = @player_bet
     end
@@ -222,6 +168,57 @@ class Player
             @money += @player_bet
         end
     end
+
+    ################ HELPER METHODS ###################
+    
+    #Helper method to evaluate value of cards at hand
+    #returns value of hand or split hand
+    def handValue(split=false)
+        if split 
+            return @splitHandValue
+        else
+            return @player_handVal
+        end
+    end
+
+    #Helper method to clear variables for player
+    def clearHand
+        #Clears regular variables
+        @player_hand = []
+        @player_handVal = 0
+        @hasAce = false
+        @player_bet = 0
+
+        ##Clears split variables
+        @split = false
+        @splitHandList = []
+        @splitHandValue = 0
+        @splitHasAce = false
+        @split_bet = 0
+    end
+
+    #Helper function to check the value of the card in hand - deals with the Ace and the 11/1 switching
+    def cardValue(card, split=false)
+        handVal = handValue(split)
+        royals = ['J', 'Q', 'K']
+        val = card[1]
+        if val == 'A'
+            if (handVal > 10)
+                return 1
+            else
+                if split 
+                    @splitHasAce = true
+                else
+                    @hasAce = true
+                end
+                return 11
+            end
+        elsif (royals.include? val)
+            val = 10
+        end
+        return val
+    end
+
 end
 
 class Dealer < Player
@@ -261,6 +258,7 @@ class Dealer < Player
     end
 
     #Method for dealer to draw hand
+    #Returns True if dealer does not win
     def firstHand
         puts "========================================"
         receive(@deck.pop())
@@ -298,6 +296,7 @@ class Dealer < Player
 
 
     #Method for Dealer's turn - Show hand and will not hit if hand > 16
+    #Returns the value of the Dealer's hand
     def dealerRound
         if @actives.length < 1
             return

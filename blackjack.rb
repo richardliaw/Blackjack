@@ -85,18 +85,21 @@ def play(dealer)
         3.times{ puts "========================================"}
         split = false
         puts "#{player.name}, what would you like to do?"
+
+        #Checks if 2 cards have same value or type AND if player can affort to split
         if (player.player_hand[0][1] == player.player_hand[1][1] || 
             player.cardValue(player.player_hand[0]) == player.cardValue(player.player_hand[1])) && player.money >= player.player_bet
             puts "#{player.name}, you can split! Would you like to split? (Y/N)"
             choice = gets.chomp.downcase
             split = (choice == "yes" || choice == "y")
+            if split #deal with the split hand
+                player.splitHand
+                playAction(dealer, player, split)
+            end
         end
-        if split #deal with the split hand
-            player.splitHand
-            playAction(dealer, player, split)
-        end
+
         playAction(dealer, player) #regular hand action
-        if !player.checkBust(split) || !player.checkBust #if both splitcheck + regular nonbust
+        if !player.checkBust(split) || !player.checkBust #if either split hand or regular hand nonbust
             dealer.actives << player
         end
     end
@@ -106,10 +109,10 @@ end
 def checkPlayers(dealer)
     remaining = []
     for player in dealer.players
-        if player.money <= 0 #Bankrupt case
+        if player.money <= 0 #Bankrupt case - Player does not continue
             puts "Sorry, #{player.name}! You're out of money! Try again next time."
-        else
-            remaining << player
+        else 
+            remaining << player #Add player to next round
         end
     end
     dealer.players = remaining
@@ -122,13 +125,14 @@ def payoff(dealer, i, split=false)
     else
         puts "Checking hand for #{i.name}..."
     end
-    if dealer.checkBust || i.handValue(split) > dealer.handValue
+
+    if dealer.checkBust || i.handValue(split) > dealer.handValue #Winning case
         puts "#{i.name}, you've beat the dealer!"
         puts "You've won #{i.player_bet}!"
         i.win(split)
-    elsif dealer.handValue > i.handValue(split)
+    elsif dealer.handValue > i.handValue(split) #Losing Case
         puts "Dealer hand is greater than #{i.name}..."
-    else 
+    else #Tie case
         puts "It's a tie between Dealer and #{i.name}."
         i.tie(split)
     end
