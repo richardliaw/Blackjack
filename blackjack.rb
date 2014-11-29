@@ -94,6 +94,14 @@ def play(dealer)
             split = (choice == "yes" || choice == "y")
             if split #deal with the split hand
                 player.splitHand
+                puts "For the split hand..."
+                dealer.passCards(player, split)
+                puts "Press enter to continue"
+                gets
+                puts "For the regular hand..."
+                dealer.passCards(player)
+                puts "Press enter to continue"
+                gets
                 playAction(dealer, player, split)
             end
         end
