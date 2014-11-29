@@ -1,168 +1,42 @@
-class Hand
-    attr_reader :player, :bet
-
-    def initialize(ownPlayer, initbet, split=false)
-        @player = ownPlayer
-        @bet = initbet
-        @cards = []
-        @handVal = 0
-        @hasAce = false
-        @split = split
-    end
-
-    def splitHand
-        newHand = Hand.new(@player, @bet, true)
-        newHand.receive(@cards.pop())
-        reAdd = @cards.pop
-        @handVal = 0
-        @hasAce = false
-        @handVal = cardValue(@cards[0])
-        return newHand
-    end
-
-    def double
-        @bet *= 2
-    end
-
-    def checkHand
-        puts "You have the following cards:"
-        for card in cards
-            puts "#{card[1]} of #{card[0]}"
-        end
-        puts "Your hand value is #{@handVal}"
-    end
-
-    def checkBet
-        puts "#{@player.name}, this hand's bet is #{@bet}"   
-        puts "#{@player.name}, you have #{@player.money} left as of this turn!"
-    end
-
-
-    def busted
-        return @handVal > 21
-    end
-
-    def receive(card, dealerShow=false)
-        if dealerShow
-            puts "#{name} draws a hidden card..."
-        else
-            puts "#{name} draws a #{card[1]} of #{card[0]}..."
-        end
-        @cards << card
-        cardVal = cardValue(card)
-        if (((@handVal + cardVal) > 21) && @hasAce)
-            @handVal -= 10
-            @hasAce = false
-        end
-        @handVal += cardVal
-    end
-
-    def cardValue(card)
-        royals = ['J', 'Q', 'K']
-        val = card[1]
-        if val == 'A'
-            if (@handVal > 10)
-                return 1
-            else
-                @hasAce = true
-                return 11
-            end
-        elsif (royals.include? val)
-            val = 10
-        end
-        return val
-    end
-
-end
+require './Hand'
 
 class Player
-    attr_reader :player_handsVal, :name, :money, :player_bet, :player_hands, :split, :split_bet, :split_val
+    attr_reader :name, :money, :player_hands
 
     def initialize(name_player, mon)
         @name = name_player
         @money = mon
 
         ######## Hand Variables ##########
-        # @player_bet = 0
         @player_hands = []
-
-        # ######## Split Hand Variables ##########
-        # @split = false
-        # @splitHandList = []
-        # @splitHandValue = 0
-        # @splitHasAce = false
-        # @split_bet = 0
     end
-
 
     ################ METHODS FOR GAME PLAY ##########################
 
     #Method to begin split when there are duplicates in value
     def splitHand(hand)
-        splitBet(hand)
-        @player_hands << hand.splitHand
+        @money -= hand.bet
+        @player_hands << hand.splitAction
+    end
+
+    def mainHand
+        return @player_hands[0]
     end
 
     def doubleHand(hand)
-        @money -= hand.bet
-        hand.double
+        if @money >= hand.bet
+            @money -= hand.bet
+            hand.double
+            return true
+        else
+            return false
+        end
     end
 
-
-    #Method that checks value and cards in hand
-    # def checkHand(split=false)
-    #     hand = @player_hands
-    #     val = handValue(split)
-    #     if split
-    #         hand = @splitHandList
-    #     end
-
-    #     puts "You have the following cards:"
-
-    #     for card in hand
-    #         puts "#{card[1]} of #{card[0]}"
-    #     end
-    #     puts "Your hand value is #{val}"
-    # end
-
-    # #Method that checks money and current bet
-    # def checkBet(split=false)
-    #     puts "#{name}, your current bet is #{player_bet}"   
-    #     puts "#{name}, you have #{money} left as of this turn!"
-    # end
-
-    #Method for Split hand receiving cards
-    # def split_receive(card)
-    #     puts "#{name} draws a #{card[1]} of #{card[0]}..."
-    #     @splitHandList << card
-    #     cardVal = cardValue(card)
-    #     if (((@splitHandValue + cardVal) > 21) && @splitHasAce)
-    #         @splitHandValue -= 10
-    #         @splitHasAce = false
-    #     end
-    #     @splitHandValue += cardValue(card)
-    # end
-
-    # #Method for regular hand receiving cards
-    # def receive(card, dealerShow=false)
-    #     if dealerShow
-    #         puts "#{name} draws a hidden card..."
-    #     else
-    #         puts "#{name} draws a #{card[1]} of #{card[0]}..."
-    #     end
-    #     @player_hands << card
-    #     cardVal = cardValue(card)
-    #     if (((@player_handsVal + cardVal) > 21) && @hasAce)
-    #         @player_handsVal -= 10
-    #         @hasAce = false
-    #     end
-    #     @player_handsVal += cardValue(card)
-    # end
-
-    # #Method to check handValue
-    # def checkBust(split=false)
-    #     return handValue(split) > 21
-    # end
+    def checkBet(hand)
+        puts "#{name}, this hand's bet is #{hand.bet}"   
+        puts "#{name}, you have #{money} left as of this turn!"
+    end
 
 
     #################### METHODS TO DEAL WITH BET #####################
@@ -204,45 +78,12 @@ class Player
     end
 
     ################ HELPER METHODS ###################
-    
-    #REMOVE
-    #Helper method to evaluate value of cards at hand
-    #returns value of hand or split hand
-    # def handValue(split=false)
-    #     if split 
-    #         return @splitHandValue
-    #     else
-    #         return @player_handsVal
-    # end
 
     #Helper method to clear variables for player
     def clearHands
         #Clears regular variables
         @player_hands = []
     end
-
-    #REMOVE
-    # #Helper function to check the value of the card in hand - deals with the Ace and the 11/1 switching
-    # def cardValue(card, split=false)
-    #     handVal = handValue(split)
-    #     royals = ['J', 'Q', 'K']
-    #     val = card[1]
-    #     if val == 'A'
-    #         if (handVal > 10)
-    #             return 1
-    #         else
-    #             if split 
-    #                 @splitHasAce = true
-    #             else
-    #                 @hasAce = true
-    #             end
-    #             return 11
-    #         end
-    #     elsif (royals.include? val)
-    #         val = 10
-    #     end
-    #     return val
-    # end
 
 end
 
@@ -258,6 +99,7 @@ class Dealer < Player
         @deck = []#Holds Deck
         @players = []
         @actives = []
+        @main_hand = nil
     end
 
     ############# METHODS TO START EACH ROUND ##############
@@ -282,13 +124,18 @@ class Dealer < Player
         end
     end
 
+    def handValue
+        return @main_hand.handVal
+    end
+
     #Method for dealer to draw hand
     #Returns True if dealer does not win
     def firstHand
+        @main_hand = Hand.new(self, 1000)
         puts "========================================"
-        receive(@deck.pop())
-        receive(@deck.pop(), true)
-        if @player_handsVal == 21
+        @main_hand.receive(@deck.pop())
+        @main_hand.receive(@deck.pop(), true)
+        if @main_hand.handVal == 21
             puts "Dealer has drawn a JackPot!"
             puts "Dealer shows second card: #{@player_hands[1][1]} of #{@player_hands[1][0]}  "
             return false
@@ -300,21 +147,15 @@ class Dealer < Player
 
     #Method to take the card on top of deck and pass card to current player
     #Returns true if player is allowed to continue - not allowed if hand is greater than 21
-    def passCards(player, split=false)
-        if split 
-            player.split_receive(@deck.pop())
-        else
-            player.receive(@deck.pop())#Pass out card
-        end
-        if player.name != "Dealer"
-            if player.checkBust(split)
+    def passCards(hand)
+        hand.receive(@deck.pop())#Pass out card
+        puts "#{hand.player}"
+        if hand.player.name != "Dealer"
+            if hand.busted
                 puts "========================================"
                 puts "Sorry! You've bust!"
                 return false
             end
-        # elsif player.handValue(split) == 21
-        #     puts "Jackpot!!!!!!!!!!"
-        #     return false
         end
         return true
     end
@@ -327,13 +168,13 @@ class Dealer < Player
             return
         end
         puts "Dealer shows second card: #{@player_hands[1][1]} of #{@player_hands[1][0]}  "
-        while(@player_handsVal < 17) do #Dealer will not hit over 16
+        while(@main_hand.handVal < 17) do #Dealer will not hit over 16
             puts "Press enter to continue..."
             gets
-            passCards(self)
+            passCards(@main_hand)
         end
         puts "Dealer hand is #{@player_handsVal}"
-        return @player_handsVal
+        return @main_hand.handVal
     end
 
 
