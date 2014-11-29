@@ -16,7 +16,9 @@ class Player
     #Method to begin split when there are duplicates in value
     def splitHand(hand)
         @money -= hand.bet
-        @player_hands << hand.splitAction
+        newHand = hand.splitAction
+        @player_hands << newHand
+        return newHand
     end
 
     def mainHand
@@ -89,7 +91,7 @@ end
 
 class Dealer < Player
 
-    attr_accessor :actives, :players
+    attr_accessor :players
 
     ####Initializes the Dealer object to hold a deck
     #players - list of players
@@ -98,7 +100,7 @@ class Dealer < Player
         super("Dealer", 1000)
         @deck = []#Holds Deck
         @players = []
-        @actives = []
+        # @actives = []
         @main_hand = nil
     end
 
@@ -164,9 +166,6 @@ class Dealer < Player
     #Method for Dealer's turn - Show hand and will not hit if hand > 16
     #Returns the value of the Dealer's hand
     def dealerRound
-        if @actives.length < 1
-            return
-        end
         puts "Dealer shows second card: #{@player_hands[1][1]} of #{@player_hands[1][0]}  "
         while(@main_hand.handVal < 17) do #Dealer will not hit over 16
             puts "Press enter to continue..."

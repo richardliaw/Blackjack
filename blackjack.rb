@@ -16,15 +16,27 @@ def placeBets(dealer)
 end
 
 #Method implementing player turn action
-def playAction(dealer, hand, split=false)
+def playAction(dealer, hand)
     player = hand.player
     continue = true
     begin
         3.times{ puts "========================================"}
-        puts "#{player.name}, choose from the following options:"
-        if split
-            puts "Dealing split hand..."
+        if (hand[0][1] == hand[1][1] || 
+        hand.cardValue(hand[0]) == hand.cardValue(hand[1])) && player.money >= hand.bet
+        puts "#{player.name}, you can split! Would you like to split? (Y/N)"
+        choice = gets.chomp.downcase
+        split = (choice == "yes" || choice == "y")
+        if split #deal with the split hand
+            newHand = player.splitHand(hand)
+            puts "For the regular hand..."
+            dealer.passCards(hand)
+            puts "Press enter to continue"
+            gets
+            puts "New Hand..."
+            dealer.passCards(newHand)
         end
+
+        puts "#{player.name}, choose from the following options:"
         puts "Check Hand (C), Hit(H), Stay (S), Double Down (D), Check Money (M)"
         action = gets.chomp
         case action
@@ -33,7 +45,6 @@ def playAction(dealer, hand, split=false)
         when "DECK!"
             dealer.checkDeck
         when "ADMIN"
-            puts "#{dealer.actives} ++++++++++++++++++++++++++++++++"
             puts "#{dealer.players} list of players"
 
         ###ACTIONS###
@@ -63,7 +74,6 @@ def play(dealer)
 
     dealer.createDeck
     dealer.shuffle
-    dealer.actives = []
 
     ###Obtain bets from all remaining players###
     placeBets(dealer)
@@ -82,29 +92,11 @@ def play(dealer)
 
     #Game flow for each player
     for player in dealer.players
-        3.times{ puts "========================================"}
-        split = false
-        puts "#{player.name}, what would you like to do?"
-
-        # #Checks if 2 cards have same value or type AND if player can affort to split
-        # if (player.player_hand[0][1] == player.player_hand[1][1] || 
-        #     player.cardValue(player.player_hand[0]) == player.cardValue(player.player_hand[1])) && player.money >= player.player_bet
-        #     puts "#{player.name}, you can split! Would you like to split? (Y/N)"
-        #     choice = gets.chomp.downcase
-        #     split = (choice == "yes" || choice == "y")
-        #     if split #deal with the split hand
-        #         puts "For the regular hand..."
-        #         dealer.passCards(player)
-        #         puts "Press enter to continue"
-        #         gets
-        #         playAction(dealer, player, split)
-        #     end
-        # end
-
-        playAction(dealer, player) #regular hand action
-        if !player.checkBust(split) || !player.checkBust #if either split hand or regular hand nonbust
-            dealer.actives << player
-        end
+        for hand in player.player_hands
+            3.times{ puts "========================================"}
+            split = false
+            puts "#{player.name}, what would you like to do?"
+            playAction(dealer, hand) 
     end
 end
 
@@ -149,7 +141,7 @@ end
 def endGame(dealer)
     dealer.dealerRound
     puts "_______________________________"
-    for i in dealer.actives
+    for i in dealer.players
         payoff(dealer, i)
     end
 end
