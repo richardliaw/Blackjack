@@ -6,7 +6,6 @@ class Player
     def initialize(name_player, mon)
         @name = name_player
         @money = mon
-
         ######## Hand Variables ##########
         @player_hands = []
     end
@@ -14,6 +13,8 @@ class Player
     ################ METHODS FOR GAME PLAY ##########################
 
     #Method to begin split when there are duplicates in value
+    #Takes care of money/bet, creates new hand and adds it to list of hands
+    #Returns the new hand
     def splitHand(hand)
         @money -= hand.bet
         newHand = hand.splitAction
@@ -21,10 +22,13 @@ class Player
         return newHand
     end
 
+    #Method to return the first hand for the player
     def mainHand
         return @player_hands[0]
     end
 
+    #Method to deal with doubling the hand value 
+    #Returns true if procedure completed
     def doubleHand(hand)
         if @money >= hand.bet
             @money -= hand.bet
@@ -35,6 +39,7 @@ class Player
         end
     end
 
+    #Checks the bet set on a hand
     def checkBet(hand)
         puts "#{name}, this hand's bet is #{hand.bet}"   
         puts "#{name}, you have #{money} left as of this turn!"
@@ -64,7 +69,8 @@ class Player
         end while verify != "y" && verify != "yes"
 
         puts "You have bet #{amount}!"
-        @player_hands << Hand.new(self, amount)
+        @money -= amount
+        @player_hands << Hand.new(self, amount, 1)
     end
 
     ############### METHODS TO DEAL WITH PAYOFF #################
@@ -101,7 +107,6 @@ class Dealer < Player
         @deck = []#Holds Deck
         @players = []
         # @actives = []
-        @main_hand = nil
     end
 
     ############# METHODS TO START EACH ROUND ##############
@@ -126,20 +131,21 @@ class Dealer < Player
         end
     end
 
+    #returns the main 
     def handValue
-        return @main_hand.handVal
+        return mainHand.handVal
     end
 
     #Method for dealer to draw hand
     #Returns True if dealer does not win
     def firstHand
-        @main_hand = Hand.new(self, 1000)
+        @player_hands << Hand.new(self, 1000, 0)
         puts "========================================"
-        @main_hand.receive(@deck.pop())
-        @main_hand.receive(@deck.pop(), true)
-        if @main_hand.handVal == 21
+        mainHand.receive(@deck.pop())
+        mainHand.receive(@deck.pop(), true)
+        if handValue == 21
             puts "Dealer has drawn a JackPot!"
-            puts "Dealer shows second card: #{@player_hands[1][1]} of #{@player_hands[1][0]}  "
+            puts "Dealer shows second card: #{mainHand.cards[1][1]} of #{mainHand.cards[1][0]}  "
             return false
         end
         return true
@@ -151,32 +157,37 @@ class Dealer < Player
     #Returns true if player is allowed to continue - not allowed if hand is greater than 21
     def passCards(hand)
         hand.receive(@deck.pop())#Pass out card
-        puts "#{hand.player}"
+        # ###DEBUG####
+        # hand.receive(['HEARTS', 'A'])
+        # ###END#####
+        # puts "#{hand.player}"
         if hand.player.name != "Dealer"
             if hand.busted
                 puts "========================================"
                 puts "Sorry! You've bust!"
+                puts "========================================"
                 return false
             end
         end
         return true
     end
 
-
     #Method for Dealer's turn - Show hand and will not hit if hand > 16
     #Returns the value of the Dealer's hand
     def dealerRound
-        puts "Dealer shows second card: #{@player_hands[1][1]} of #{@player_hands[1][0]}  "
-        while(@main_hand.handVal < 17) do #Dealer will not hit over 16
+        puts "Dealer shows second card: #{mainHand.cards[1][1]} of #{mainHand.cards[1][0]}  "
+        while(handValue < 17) do #Dealer will not hit over 16
             puts "Press enter to continue..."
             gets
-            passCards(@main_hand)
+            passCards(mainHand)
         end
-        puts "Dealer hand is #{@player_handsVal}"
-        return @main_hand.handVal
+        puts "Dealer hand is #{handValue}"
+        return handValue
     end
 
-
+    def busted
+        return mainHand.busted
+    end
     #####################DEBUGGING####################
     #Prints the deck
     def checkDeck

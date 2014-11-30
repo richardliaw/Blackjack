@@ -19,11 +19,11 @@ end
 def playAction(dealer, hand)
     player = hand.player
     continue = true
-    begin
-        3.times{ puts "========================================"}
-        if (hand[0][1] == hand[1][1] || 
-        hand.cardValue(hand[0]) == hand.cardValue(hand[1])) && player.money >= hand.bet
-        puts "#{player.name}, you can split! Would you like to split? (Y/N)"
+    #split logic
+    while(hand.cards[0][1] == hand.cards[1][1] || 
+        hand.cardValue(hand.cards[0]) == hand.cardValue(hand.cards[1])) && player.money >= hand.bet
+        puts "#{player.name}, for hand #{hand.handNumber}, you can split!"
+        puts "Would you like to split? (Y/N)"
         choice = gets.chomp.downcase
         split = (choice == "yes" || choice == "y")
         if split #deal with the split hand
@@ -34,10 +34,15 @@ def playAction(dealer, hand)
             gets
             puts "New Hand..."
             dealer.passCards(newHand)
+        else
+            break
         end
+    end
 
+    begin
+        3.times{ puts "========================================"}
         puts "#{player.name}, choose from the following options:"
-        puts "Check Hand (C), Hit(H), Stay (S), Double Down (D), Check Money (M)"
+        puts "Check Hand (C), Hit(H), Stay (S), Double Down (D), Check Money (M), Check Other Hands (O)"
         action = gets.chomp
         case action
 
@@ -48,6 +53,13 @@ def playAction(dealer, hand)
             puts "#{dealer.players} list of players"
 
         ###ACTIONS###
+        when "O"
+            puts "You have #{player.player_hands.length} hands."
+            for h in player.player_hands
+                h.checkCards(true)
+                puts "Press enter to continue..."
+                gets
+            end
         when "M" #Check Money
             player.checkBet(hand)
         when "C" #Check Cards
@@ -61,6 +73,8 @@ def playAction(dealer, hand)
                 puts "Good Luck!"
                 dealer.passCards(hand)
                 continue = false
+            else
+                puts "Sorry! Not enough money to choose this action."
             end
         else #Bad Command
             puts "I don't recognize your action"
@@ -68,12 +82,14 @@ def playAction(dealer, hand)
     end while continue
 end
 
-###
+
 def play(dealer)
     #Initialize Round - Dealer will create a new deck, shuffle the deck, reset variables
 
     dealer.createDeck
     dealer.shuffle
+    dealer.clearHands
+    actives = false
 
     ###Obtain bets from all remaining players###
     placeBets(dealer)
@@ -94,10 +110,14 @@ def play(dealer)
     for player in dealer.players
         for hand in player.player_hands
             3.times{ puts "========================================"}
-            split = false
-            puts "#{player.name}, what would you like to do?"
+            puts "#{player.name}, for hand #{hand.handNumber}, what would you like to do?"
             playAction(dealer, hand) 
+            if !hand.busted
+                actives = true
+            end
+        end
     end
+    return actives
 end
 
 #Method to remove bankrupt players
@@ -115,21 +135,23 @@ end
 
 #Method to evaluate hands and handle the payoff
 def payoff(dealer, player)
-    for hand in player.playerHands
+    for hand in player.player_hands
         if hand.busted
             next 
         end
-        puts "Checking hand for #{player.name}..."
+        puts "Checking hand #{hand.handNumber} for #{player.name}..."
 
         if dealer.busted || hand.handVal > dealer.handValue #Winning case
-            puts "#{player.name}, you've beat the dealer!"
+            puts "#{player.name}'s hand #{hand.handNumber} has beat the dealer!"
             puts "You've won #{hand.bet}!"
             player.win(hand)
         elsif dealer.handValue > hand.handVal #Losing Case
-            puts "Dealer hand is greater than #{player.name}..."
+            puts "Dealer hand is greater than #{player.name}'s hand #{hand.handNumber} ..."
+            puts "You don't win any money this round."
         else #Tie case
-            puts "It's a tie between Dealer and #{player.name}."
+            puts "It's a tie between Dealer and #{player.name}'s hand #{hand.handNumber}."
             player.tie(hand)
+            puts "You get your money back this round."
         end
         puts "#{player.name}, you have #{player.money} dollars left."
         puts "\nPress enter to continue..."
