@@ -1,9 +1,3 @@
-#Implement a simple game of blackjack. It should employ a basic command-line interface. The program should begin by asking how many players are at the table, start each player with $1000, and allow the players to make any integer bet for each deal.
-#The program must implement the core blackjack rules, i.e. players can choose to hit until they go over 21, the dealer must hit on 16 and stay on 17, etc. It must also support doubling-down and splitting. You are welcome but not required to add functionality on top of these basics. We are most interested in seeing a clean codebase that we can readily understand.
-
-###BEGIN BY RUNNING "ruby blackjack.rb"####
-
-
 require './Player'
 
 #Method to ask for bets from current players
